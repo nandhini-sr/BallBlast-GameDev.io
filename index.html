@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Ball Blast Game</title>
+	<link rel="stylesheet" type="text/css" href="css/index.css">
+</head>
+<body>
+	<canvas id="canvas"></canvas>
+	<img id="normBtn" class="btn" src="images/normBtn.png" width="150px" height="50px" onclick="setJS('gameBall.js')">
+    <img id="hackBtn" class="btn" src="images/hackBtn.png" width="150px" height="50px" onclick="">
+	<img id="tryAgainBtn" class="btn" src="images/tryAgainBtn.png" width="200px" height="75px" onclick="location.href='index.html'">
+
+	<audio id="sound" src="sound/sound.mp3"></audio>
+
+
+<script>
+	var canvas = document.querySelector('canvas'); 
+    canvas.height = window.innerHeight;
+    canvas.width = window.innerWidth/2;
+
+    var c = canvas.getContext('2d');  
+
+	function setJS(fileName){
+	var element = document.createElement('script');
+	element.type = "text/javascript";
+	element.src = "javascript/"+fileName; 
+	document.body.appendChild(element);
+
+}
+</script>
+	
+<script type="text/javascript" src="javascript/setGame.js"></script>
+</body>
+</html>
