@@ -17,7 +17,7 @@ class Cannon
 		this.y = y;
 		this.width = width;
 		this.height = height;
-		this.velocity = 5;
+		this.velocity = 15;
 	}
 
 	draw()

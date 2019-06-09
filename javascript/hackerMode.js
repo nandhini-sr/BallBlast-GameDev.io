@@ -6,7 +6,15 @@ var c = canvas.getContext('2d');
 
 var colors = ['#83f400','#F52549','#F9A603'];
 var score = 0;
-set = 1;
+set = 1; 
+
+var highScore = localStorage.getItem('highScore');
+if(!highScore)
+{
+     highScore = 0;
+     localStorage.setItem('highScore',0);
+}
+
 
 var normBtn = document.getElementById('normBtn');
 normBtn.style.display = 'none';
@@ -95,16 +103,17 @@ class BulletSet{
 
 class Rock
 {
-	constructor(x,y,dx,dy,radius,color)
+	constructor(x,y,dx,dy,radius,color,count)
 	{
 		this.x = x;
 		this.y = y;
 		this.radius = radius;
+		this.breakRadius = radius;
 		this.color = color;
 		this.dx = dx;
 		this.dy = dy;
 		this.gravity = 1;
-		this.count = 0;
+		this.count = count;
 	}
 
 	draw()
@@ -130,10 +139,18 @@ class Rock
 			this.dy = -this.dy
 			this.count = 1;
 		}
+
 		else{
 
          	this.dy +=this.gravity;
          }
+
+        if(this.count)
+		{
+			if(this.y < this.radius)
+			this.dy = -this.dy;
+	
+		}
 
          if(this.count)
          {
@@ -161,8 +178,29 @@ class Rock
         if(collisionDetection(bulletset.x, bulletset.y, roCk.x, roCk.y)<roCk.radius + bulletset.radius)
         {
         	bulletSets.splice(index,1);
-        	roCk.radius -=1;
+        	if(roCk.radius>0)
+        	{
+        		roCk.radius -=1;
+        	}
+        	
         	score = score + 1;
+            
+            //INCREASE SPEED
+        	if(score % 7 == 0)
+	        { 
+      			nextbulletTime = nextbulletTime - 5;
+      			if(nextbulletTime<=50)
+      			{
+      				nextbulletTime = 50;
+      			}
+      			clearInterval(timerBullet);
+      			bulletRelease(nextbulletTime);
+	        }
+
+	        if(score>highScore) //High Score
+	        {
+	        	localStorage.setItem('highScore',score);
+	        }
         }
 
    		 });
@@ -171,28 +209,67 @@ class Rock
         if(collisionDetection(cannon.x,cannon.y+cannon.height,roCk.x,roCk.y)<roCk.radius + 10)
         {
         	gameOver();
+        	
         } 
         //for rock and right wheel
         else if(collisionDetection(cannon.x + cannon.width,cannon.y+cannon.height,roCk.x,roCk.y)<roCk.radius + 10)
         {
         	gameOver();
+        
         }
         
         //for rock and base rectangle cannon
         if((clamp(cannon.x,(cannon.x+cannon.width),roCk.x,roCk.radius))&&(clamp(cannon.y,(cannon.y + cannon.height),roCk.y,roCk.radius)))
          {
-         	gameOver();
+        	gameOver();
          } 
         
         //for rock and projected part of cannon
         if((clamp((cannon.x + 3*(cannon.width/8)),(cannon.x + 5*(cannon.width/8)),roCk.x,roCk.radius))&&(clamp(cannon.y-50,cannon.y,roCk.y,roCk.radius)))
          {
-         	gameOver();
+         	
+        	gameOver();
+ 
          } 
 
 
    		 });
 		this.draw();
+	}
+
+	shatter()
+	{
+		this.radius = 0;
+		for(let i=0; i<2; i++)
+   		{
+   	  		
+   	  		if(i==0)
+   	  		{
+               var dx = 7;
+   	  		}
+
+   	  		else if(i==1)
+   	  		{
+   	            var dx = -7;
+   	  		}
+
+   	  		if(this.y > canvas.height-170)
+   	  		{
+               var dy = randomIntFromRange(20,25)
+   	  		}
+   	  		else
+   	  		{
+   	  			 var dy = randomIntFromRange(10,15);
+   	  		}
+   	   		
+   	   		var newRadius = Math.floor(this.breakRadius/2);
+   	   		if(newRadius>=10)
+   	   		{
+   	   		     rocks.push(new Rock(this.x, this.y,dx,dy,newRadius,this.color,1));	
+
+   	   		}
+   		}
+
 	}
 
 }
@@ -225,7 +302,7 @@ function myKeyDown()
 	}
 }
 
-function bulletRelease()
+function bulletRelease(bulletRepeat)
 {
 	timerBullet = setInterval(function(){
 
@@ -233,12 +310,7 @@ function bulletRelease()
 		bulletSets.push(new BulletSet(cannon.x + 6, cannon.y - 50, 2));
 		bulletSets.push(new BulletSet(cannon.x + 12, cannon.y - 50, 2));
 
-		if(bulletSets.length > 100)
-		{
-			bulletSets.splice(0,30);
-		}
-
-	},200)
+	},bulletRepeat);
 }
 
 function rockRelease()
@@ -248,14 +320,17 @@ function rockRelease()
 		var y = randomIntFromRange(10,canvas.height/4);
         var dy = randomIntFromRange(-2,2);
 		var color = randomColor(colors);
-		var radius = randomIntFromRange(15,50);
-		rocks.push(new Rock(0,y,5,dy,radius,color));
+		var radius = randomIntFromRange(40,60);
+		rocks.push(new Rock(0,y,5,dy,radius,color,0));
 
-	},5000)
+	},8000)
 }
+
 
 let bulletSets = [];
 let rocks = [];
+var nextbulletTime = 200;
+
 
 function initialize()
 {
@@ -264,7 +339,13 @@ function initialize()
     cannon.velocity = 15;
 	cannon.draw();
 
-	bulletRelease();
+	var y = randomIntFromRange(10,canvas.height/4);
+    var dy = randomIntFromRange(-2,2);
+    var color = randomColor(colors);
+    var radius = randomIntFromRange(40,60);
+	rocks.push(new Rock(0,y,5,dy,radius,color,0));
+
+	bulletRelease(nextbulletTime);
 	rockRelease();
 	
 	bg.draw();
@@ -277,7 +358,7 @@ function gameOver()
 	bulletSets.splice(0,bulletSets.length);
 	rocks.splice(0,rocks.length);
 	sound.pause();
-	setJS('tryAgainGame.js');
+	setJS('tryAgainHack.js');
 }
 
 function gameLoop()
@@ -297,6 +378,7 @@ function gameLoop()
         roCk.update();
         if(roCk.radius <= 10)
         {
+        	roCk.shatter();
         	rocks.splice(index,1);
         }
 
@@ -305,8 +387,15 @@ function gameLoop()
     c.font = 'bold 35px Open Sans';
     c.fillStyle = 'black';
     c.textAlign = 'center';
-    c.fillText('Score: ' + score,500,120);
-
+    if(score>highScore)
+    {
+        c.fillText('High Score: ' + score,500,120);	
+    }
+    else
+    {
+    	c.fillText('Score: ' + score,500,120);
+    }
+    
 	requestAnimationFrame(gameLoop);
 }
 
